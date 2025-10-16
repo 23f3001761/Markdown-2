@@ -4,200 +4,158 @@
   <meta charset="utf-8"/>
   <meta content="width=device-width, initial-scale=1" name="viewport"/>
   <title>
-   Markdown Viewer with Tabs
+   Markdown Viewer
   </title>
   <style>
    :root {
-      --bg: #0e111a;
-      --surface: #141a26;
-      --surface-2: #1f2634;
-      --text: #e8e8e8;
-      --muted: #a6acb8;
-      --accent: #4f9aff;
+      --bg: #1a1b23;
+      --panel: #1f2130;
+      --fg: #e6e6e6;
+      --muted: #b6b8c4;
+      --accent: #6ea8fe;
     }
-    * { box-sizing: border-box; }
-    html, body { height: 100%; }
-    body {
+    html, body {
+      height: 100%;
       margin: 0;
-      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
       background: var(--bg);
-      color: var(--text);
+      color: var(--fg);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
     }
     header {
       padding: 12px 16px;
-      background: #181e2b;
-      border-bottom: 1px solid #2a3240;
+      border-bottom: 1px solid #2a2a3a;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      background: rgba(26,26,38,.95);
+      z-index: 10;
     }
-    header h1 {
-      margin: 0;
-      font-size: 1.1rem;
+    #title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
       font-weight: 600;
     }
-
-    /* Tabs */
-    #markdown-tabs {
-      display: inline-flex;
-      gap: 6px;
-      padding: 8px 12px;
-      margin: 8px;
-      background: #121725;
-      border-radius: 8px;
-      border: 1px solid #2a2f55;
-      align-items: center;
+    #markdown-source-label {
+      font-size: 0.92rem;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 60vw;
     }
-    #markdown-tabs button {
-      background: #1b2140;
-      color: #fff;
-      border: 1px solid #3a3f7a;
-      border-radius: 6px;
-      padding: 8px 12px;
-      cursor: pointer;
-      font-weight: 500;
-    }
-    #markdown-tabs button.active {
-      background: #2a2f64;
-      border-color: #4f60b0;
-    }
-
-    /* Layout */
     main {
-      padding: 12px;
+      padding: 20px;
+      max-width: 900px;
+      margin: 0 auto;
     }
-    .pane { display: block; }
-    .hidden { display: none; }
-
-    /* Outputs */
-    #markdown-output {
-      padding: 14px;
-      background: #0b0f17;
-      min-height: 58vh;
-      border: 1px solid #2b3240;
-      border-radius: 8px;
-      overflow: auto;
+    article {
+      line-height: 1.6;
     }
-    #markdown-output h1, #markdown-output h2, #markdown-output h3 {
-      color: #ffffff;
-    }
-    #markdown-source {
-      width: 100%;
-      height: 58vh;
-      padding: 12px;
-      font-family: ui-monospace,SFMono-Regular,Monaco,Consolas,"Liberation Mono";
-      font-size: 13px;
-      line-height: 1.5;
-      color: #e8e8e8;
-      background: #0a0f1a;
-      border: 1px solid #333;
-      border-radius: 8px;
-      resize: vertical;
-    }
-
-    /* Responsive two-column feel (optional) */
-    @media (min-width: 900px) {
-      .two-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: start; }
-      #markdown-output, #markdown-source { height: 58vh; }
-    }
+    h1, h2, h3 { line-height: 1.2; margin-top: 1em; margin-bottom: .5em; }
+    pre { background: #0b0b0b; padding: 12px; border-radius: 6px; overflow: auto; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas; }
+    a { color: #8ab4f8; text-decoration: none; }
+    a:hover { text-decoration: underline; }
   </style>
-  <!-- External libraries (latest stable) -->
-  <script src="https://cdn.jsdelivr.net/npm/marked@latest/marked.min.js">
-  </script>
-  <script src="https://cdn.jsdelivr.net/npm/dompurify@2.4.0/dist/purify.min.js">
-  </script>
  </head>
  <body>
   <header>
-   <h1>
-    Markdown Viewer with Sync Source and Render Tabs
-   </h1>
+   <div id="title">
+    <span style="font-size: 1.1rem; font-weight: 700;">
+     Markdown Viewer
+    </span>
+   </div>
+   <div aria-live="polite" id="markdown-source-label">
+    Source: local input.md
+   </div>
   </header>
-  <nav aria-label="Markdown tabs" id="markdown-tabs" role="navigation">
-   <button aria-controls="markdown-output-wrap" aria-selected="true" class="tab-btn active" data-tab="render" type="button">
-    Rendered
-   </button>
-   <button aria-controls="markdown-source-wrap" aria-selected="false" class="tab-btn" data-tab="source" type="button">
-    Source
-   </button>
-  </nav>
-  <main aria-label="Markdown interface" class="two-columns">
-   <section class="pane" id="markdown-output-wrap">
-    <div aria-label="Rendered HTML" aria-live="polite" id="markdown-output">
-    </div>
-   </section>
-   <section class="pane hidden" id="markdown-source-wrap">
-    <textarea id="markdown-source" placeholder="Markdown source will appear here..." spellcheck="false"></textarea>
+  <main>
+   <section id="markdown-container">
+    <article id="markdown-content">
+    </article>
    </section>
   </main>
+  <!-- External libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js">
+  </script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css" rel="stylesheet"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js">
+  </script>
   <script>
-   // Elements
-    const outputEl = document.getElementById('markdown-output');
-    const sourceEl = document.getElementById('markdown-source');
-    const outputWrap = document.getElementById('markdown-output-wrap');
-    const sourceWrap = document.getElementById('markdown-source-wrap');
-    const tabButtons = document.querySelectorAll('#markdown-tabs .tab-btn');
+   (function () {
+      const contentEl = document.getElementById('markdown-content');
+      const sourceLabel = document.getElementById('markdown-source-label');
 
-    // Rendering with Marked + DOMPurify for safety
-    function renderMarkdown(text) {
-      let html = '';
-      try {
-        if (typeof marked.parse === 'function') {
-          html = marked.parse(text);
-        } else {
-          html = marked(text);
+      // Render markdown to HTML + syntax highlighting
+      function renderMarkdown(md) {
+        const html = marked.parse(md, {
+          gfm: true,
+          breaks: true
+        });
+        contentEl.innerHTML = html;
+
+        // Highlight code blocks if hljs is available
+        if (typeof hljs !== 'undefined') {
+          document.querySelectorAll('pre code').forEach((block) => {
+            hljs.highlightElement(block);
+          });
         }
-      } catch (e) {
-        html = '<p>Error rendering Markdown</p>';
       }
-      // Sanitize before injecting
-      outputEl.innerHTML = DOMPurify.sanitize(html);
-    }
 
-    // Tab switch handler
-    function showPane(mode) {
-      if (mode === 'render') {
-        outputWrap.classList.remove('hidden');
-        sourceWrap.classList.add('hidden');
-        tabButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.tab === 'render'));
+      function updateSourceLabel(text) {
+        if (sourceLabel) sourceLabel.textContent = text;
+      }
+
+      function loadMarkdownFromText(md, sourceName) {
+        renderMarkdown(md);
+        updateSourceLabel('Source: ' + sourceName);
+        document.title = 'Markdown Viewer â ' + sourceName;
+      }
+
+      function fetchMarkdownFrom(url, onSuccess, onError) {
+        fetch(url)
+          .then(res => {
+            if (!res.ok) throw new Error('Request failed: ' + res.status);
+            return res.text();
+          })
+          .then(text => onSuccess(text))
+          .catch(err => onError(err));
+      }
+
+      // Check for ?url= parameter
+      const urlParams = new URLSearchParams(window.location.search);
+      const remoteUrl = urlParams.get('url');
+      const localDefault = 'input.md';
+
+      if (remoteUrl) {
+        updateSourceLabel('Source: URL â ' + remoteUrl);
+        fetchMarkdownFrom(remoteUrl,
+          (md) => {
+            loadMarkdownFromText(md, remoteUrl);
+          },
+          () => {
+            // Fallback to local attachment if URL load fails
+            updateSourceLabel('Source: URL failed, falling back to ' + localDefault);
+            fetchMarkdownFrom(localDefault,
+              (md) => loadMarkdownFromText(md, localDefault),
+              () => {
+                contentEl.innerHTML = '<p>Unable to load markdown from URL or local attachment.</p>';
+                updateSourceLabel('Source: unavailable');
+              });
+          });
       } else {
-        outputWrap.classList.add('hidden');
-        sourceWrap.classList.remove('hidden');
-        tabButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.tab === 'source'));
-        // Focus the editor for quick edits
-        sourceEl.focus();
+        // No URL param; load local attachment by default
+        fetchMarkdownFrom(localDefault,
+          (md) => loadMarkdownFromText(md, localDefault),
+          () => {
+            contentEl.innerHTML = '<p>Unable to load local attachment.</p>';
+            updateSourceLabel('Source: unavailable');
+          });
       }
-    }
-
-    // Wire up tab buttons
-    tabButtons.forEach(btn => {
-      btn.addEventListener('click', () => {
-        const mode = btn.dataset.tab;
-        showPane(mode);
-      });
-    });
-
-    // Load Markdown from input.md and sync both views
-    async function loadMarkdownFile() {
-      try {
-        const res = await fetch('input.md');
-        if (!res.ok) throw new Error('Failed to fetch input.md');
-        const text = await res.text();
-        sourceEl.value = text;
-        renderMarkdown(text);
-        showPane('render');
-      } catch (err) {
-       const fallback = '# Error loading input.md\n\n' + (err?.message ?? '');
-        sourceEl.value = fallback;
-        renderMarkdown(fallback);
-        showPane('render');
-      }
-    }
-
-    // Sync: update render as user edits in source
-    sourceEl.addEventListener('input', () => {
-      renderMarkdown(sourceEl.value);
-    });
-
-    // Initialize
-    document.addEventListener('DOMContentLoaded', loadMarkdownFile);
+    })();
   </script>
  </body>
 </html>
