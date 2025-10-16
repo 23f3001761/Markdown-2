@@ -184,9 +184,7 @@
         renderMarkdown(text);
         showPane('render');
       } catch (err) {
-        const fallback = '# Error loading input.md
-
-' + (err?.message ?? '');
+       const fallback = '# Error loading input.md\n\n' + (err?.message ?? '');
         sourceEl.value = fallback;
         renderMarkdown(fallback);
         showPane('render');
