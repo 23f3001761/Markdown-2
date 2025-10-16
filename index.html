@@ -1,165 +1,205 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Markdown to HTML Viewer</title>
-  <!-- Highlight.js CSS (latest stable) -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+ <head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1" name="viewport"/>
+  <title>
+   Markdown Viewer with Tabs
+  </title>
   <style>
-    :root {
-      --bg: #0f141e;
-      --card: #141a24;
-      --text: #e8eefc;
+   :root {
+      --bg: #0e111a;
+      --surface: #141a26;
+      --surface-2: #1f2634;
+      --text: #e8e8e8;
+      --muted: #a6acb8;
+      --accent: #4f9aff;
     }
-    html, body {
-      height: 100%;
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
       margin: 0;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
       background: var(--bg);
       color: var(--text);
-      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
-    }
-    .wrapper {
-      max-width: 900px;
-      margin: 40px auto;
-      padding: 0 16px;
     }
     header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 16px;
       padding: 12px 16px;
-      background: #111923;
-      border: 1px solid #1e2a3a;
-      border-radius: 8px;
+      background: #181e2b;
+      border-bottom: 1px solid #2a3240;
     }
-    h1 {
+    header h1 {
       margin: 0;
-      font-size: 1.25rem;
+      font-size: 1.1rem;
       font-weight: 600;
     }
-    #markdown-output {
-      background: #0b111b;
-      border: 1px solid #1e2a3a;
+
+    /* Tabs */
+    #markdown-tabs {
+      display: inline-flex;
+      gap: 6px;
+      padding: 8px 12px;
+      margin: 8px;
+      background: #121725;
       border-radius: 8px;
-      padding: 20px;
-      min-height: 40vh;
-      line-height: 1.6;
+      border: 1px solid #2a2f55;
+      align-items: center;
     }
-    pre {
-      padding: 0.5em;
-      overflow: auto;
+    #markdown-tabs button {
+      background: #1b2140;
+      color: #fff;
+      border: 1px solid #3a3f7a;
       border-radius: 6px;
-      background: #0e111a;
-      border: 1px solid #1e2a3a;
+      padding: 8px 12px;
+      cursor: pointer;
+      font-weight: 500;
     }
-    code {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    #markdown-tabs button.active {
+      background: #2a2f64;
+      border-color: #4f60b0;
+    }
+
+    /* Layout */
+    main {
+      padding: 12px;
+    }
+    .pane { display: block; }
+    .hidden { display: none; }
+
+    /* Outputs */
+    #markdown-output {
+      padding: 14px;
+      background: #0b0f17;
+      min-height: 58vh;
+      border: 1px solid #2b3240;
+      border-radius: 8px;
+      overflow: auto;
+    }
+    #markdown-output h1, #markdown-output h2, #markdown-output h3 {
+      color: #ffffff;
+    }
+    #markdown-source {
+      width: 100%;
+      height: 58vh;
+      padding: 12px;
+      font-family: ui-monospace,SFMono-Regular,Monaco,Consolas,"Liberation Mono";
+      font-size: 13px;
+      line-height: 1.5;
+      color: #e8e8e8;
+      background: #0a0f1a;
+      border: 1px solid #333;
+      border-radius: 8px;
+      resize: vertical;
+    }
+
+    /* Responsive two-column feel (optional) */
+    @media (min-width: 900px) {
+      .two-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: start; }
+      #markdown-output, #markdown-source { height: 58vh; }
     }
   </style>
-</head>
-<body>
-  <div class="wrapper">
-    <header aria-label="Page header">
-      <h1>Markdown to HTML (from attachments)</h1>
-      <div aria-live="polite" id="status" style="font-size:0.9em; opacity:.8;">Loading attachment: input.md</div>
-    </header>
-
-    <section id="markdown-output" aria-label="Rendered markdown output">
-      <!-- Rendered HTML will appear here -->
-    </section>
-  </div>
-
-  <!-- Marked (latest stable) -->
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <!-- Highlight.js (latest stable) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-
-  <script>
-    (function() {
-      // Graceful initialization
-      const output = document.getElementById('markdown-output');
-      const status = document.getElementById('status');
-
-      async function loadAndRender() {
-        try {
-          // Fetch the attachment from the same directory
-          const res = await fetch('input.md');
-          if (!res.ok) {
-            status.textContent = 'Failed to load input.md';
-            output.innerHTML = '<p>Could not load input.md from attachments.</p>';
-            return;
-          }
-          const md = await res.text();
-
-          // Convert Markdown to HTML using marked
-          const options = {
-            breaks: true,
-            gfm: true,
-            headerIds: true,
-            // Do not pre-highlight; we'll run highlight.js after rendering
-            highlight: function(code, lang) {
-              // Return raw code; we'll highlight after insertion
-              return code;
-            }
-          };
-
-          // Support both v4 parse API and older if present
-          let html;
-          if (typeof marked.parse === 'function') {
-            html = marked.parse(md, options);
-          } else {
-            html = marked(md, options);
-          }
-
-          // Render
-          output.innerHTML = html;
-          status.textContent = 'Rendered input.md to HTML. Highlighting code blocks...';
-
-          // Apply syntax highlighting to code blocks using highlight.js
-          const blocks = output.querySelectorAll('pre > code');
-          blocks.forEach((block) => {
-            try {
-              if (typeof hljs !== 'undefined') {
-                // Prefer highlightElement if available (v11+)
-                if (typeof hljs.highlightElement === 'function') {
-                  hljs.highlightElement(block);
-                } else if (typeof hljs.highlightBlock === 'function') {
-                  hljs.highlightBlock(block);
-                } else {
-                  // Fallback: try auto-detect
-                  const result = hljs.highlightAuto(block.textContent);
-                  block.innerHTML = result.value;
-                }
-              }
-            } catch (e) {
-              // Silently ignore highlight errors for safety
-            }
-          });
-
-          status.textContent = 'Done.';
-        } catch (err) {
-          status.textContent = 'Error while rendering. See console.';
-          console.error(err);
-          output.innerHTML = '<p>Error rendering input.md.</p>';
-        }
-      }
-
-      // Kick off on load
-      if (typeof marked !== 'undefined' && typeof hljs !== 'undefined') {
-        loadAndRender();
-      } else {
-        status.textContent = 'Loading dependencies...';
-        // If CDN scripts take time to load, retry after a short delay
-        const retry = setInterval(() => {
-          if (typeof marked !== 'undefined' && typeof hljs !== 'undefined') {
-            clearInterval(retry);
-            loadAndRender();
-          }
-        }, 100);
-      }
-    })();
+  <!-- External libraries (latest stable) -->
+  <script src="https://cdn.jsdelivr.net/npm/marked@latest/marked.min.js">
   </script>
-</body>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@2.4.0/dist/purify.min.js">
+  </script>
+ </head>
+ <body>
+  <header>
+   <h1>
+    Markdown Viewer with Sync Source and Render Tabs
+   </h1>
+  </header>
+  <nav aria-label="Markdown tabs" id="markdown-tabs" role="navigation">
+   <button aria-controls="markdown-output-wrap" aria-selected="true" class="tab-btn active" data-tab="render" type="button">
+    Rendered
+   </button>
+   <button aria-controls="markdown-source-wrap" aria-selected="false" class="tab-btn" data-tab="source" type="button">
+    Source
+   </button>
+  </nav>
+  <main aria-label="Markdown interface" class="two-columns">
+   <section class="pane" id="markdown-output-wrap">
+    <div aria-label="Rendered HTML" aria-live="polite" id="markdown-output">
+    </div>
+   </section>
+   <section class="pane hidden" id="markdown-source-wrap">
+    <textarea id="markdown-source" placeholder="Markdown source will appear here..." spellcheck="false"></textarea>
+   </section>
+  </main>
+  <script>
+   // Elements
+    const outputEl = document.getElementById('markdown-output');
+    const sourceEl = document.getElementById('markdown-source');
+    const outputWrap = document.getElementById('markdown-output-wrap');
+    const sourceWrap = document.getElementById('markdown-source-wrap');
+    const tabButtons = document.querySelectorAll('#markdown-tabs .tab-btn');
+
+    // Rendering with Marked + DOMPurify for safety
+    function renderMarkdown(text) {
+      let html = '';
+      try {
+        if (typeof marked.parse === 'function') {
+          html = marked.parse(text);
+        } else {
+          html = marked(text);
+        }
+      } catch (e) {
+        html = '<p>Error rendering Markdown</p>';
+      }
+      // Sanitize before injecting
+      outputEl.innerHTML = DOMPurify.sanitize(html);
+    }
+
+    // Tab switch handler
+    function showPane(mode) {
+      if (mode === 'render') {
+        outputWrap.classList.remove('hidden');
+        sourceWrap.classList.add('hidden');
+        tabButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.tab === 'render'));
+      } else {
+        outputWrap.classList.add('hidden');
+        sourceWrap.classList.remove('hidden');
+        tabButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.tab === 'source'));
+        // Focus the editor for quick edits
+        sourceEl.focus();
+      }
+    }
+
+    // Wire up tab buttons
+    tabButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const mode = btn.dataset.tab;
+        showPane(mode);
+      });
+    });
+
+    // Load Markdown from input.md and sync both views
+    async function loadMarkdownFile() {
+      try {
+        const res = await fetch('input.md');
+        if (!res.ok) throw new Error('Failed to fetch input.md');
+        const text = await res.text();
+        sourceEl.value = text;
+        renderMarkdown(text);
+        showPane('render');
+      } catch (err) {
+        const fallback = '# Error loading input.md
+
+' + (err?.message ?? '');
+        sourceEl.value = fallback;
+        renderMarkdown(fallback);
+        showPane('render');
+      }
+    }
+
+    // Sync: update render as user edits in source
+    sourceEl.addEventListener('input', () => {
+      renderMarkdown(sourceEl.value);
+    });
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', loadMarkdownFile);
+  </script>
+ </body>
 </html>

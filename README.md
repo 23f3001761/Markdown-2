@@ -1,11 +1,15 @@
-# Auto App Generator
+# Auto App Generator - Revised Version 2
 
 ## Summary
 
 This FastAPI-based service receives a request with a **brief** describing an app to build. It uses an **LLM** to generate code, deploys the app to **GitHub Pages**, and notifies an evaluation API. Each request can result in a unique app.
 
 **Example Brief:**  
-_Publish a static page that converts input.md from attachments to HTML with marked, renders it inside #markdown-output, and loads highlight.js for code blocks._
+_Add tabs #markdown-tabs that switch between rendered HTML in #markdown-output and the original Markdown in #markdown-source while keeping content in sync._
+
+## Revised Version  
+
+A second request was made to the api to modify this app to include the changes given in the brief above.  
 
 ## Setup
 
@@ -32,8 +36,7 @@ pip install -r requirements.txt
 
 ## Usage
 
-Send a POST to /api-endpoint with a JSON body like:  
-
+Send a POST to /api-endpoint with a JSON body like
 
 The app validates the secret, uses LLM to build the app, pushes it to GitHub Pages, and pings the evaluation API.
 
