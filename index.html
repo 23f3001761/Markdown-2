@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Markdown to HTML Viewer</title>
+  <!-- Highlight.js CSS (latest stable) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+  <style>
+    :root {
+      --bg: #0f141e;
+      --card: #141a24;
+      --text: #e8eefc;
+    }
+    html, body {
+      height: 100%;
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
+    }
+    .wrapper {
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 0 16px;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      padding: 12px 16px;
+      background: #111923;
+      border: 1px solid #1e2a3a;
+      border-radius: 8px;
+    }
+    h1 {
+      margin: 0;
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+    #markdown-output {
+      background: #0b111b;
+      border: 1px solid #1e2a3a;
+      border-radius: 8px;
+      padding: 20px;
+      min-height: 40vh;
+      line-height: 1.6;
+    }
+    pre {
+      padding: 0.5em;
+      overflow: auto;
+      border-radius: 6px;
+      background: #0e111a;
+      border: 1px solid #1e2a3a;
+    }
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <header aria-label="Page header">
+      <h1>Markdown to HTML (from attachments)</h1>
+      <div aria-live="polite" id="status" style="font-size:0.9em; opacity:.8;">Loading attachment: input.md</div>
+    </header>
+
+    <section id="markdown-output" aria-label="Rendered markdown output">
+      <!-- Rendered HTML will appear here -->
+    </section>
+  </div>
+
+  <!-- Marked (latest stable) -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <!-- Highlight.js (latest stable) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+  <script>
+    (function() {
+      // Graceful initialization
+      const output = document.getElementById('markdown-output');
+      const status = document.getElementById('status');
+
+      async function loadAndRender() {
+        try {
+          // Fetch the attachment from the same directory
+          const res = await fetch('input.md');
+          if (!res.ok) {
+            status.textContent = 'Failed to load input.md';
+            output.innerHTML = '<p>Could not load input.md from attachments.</p>';
+            return;
+          }
+          const md = await res.text();
+
+          // Convert Markdown to HTML using marked
+          const options = {
+            breaks: true,
+            gfm: true,
+            headerIds: true,
+            // Do not pre-highlight; we'll run highlight.js after rendering
+            highlight: function(code, lang) {
+              // Return raw code; we'll highlight after insertion
+              return code;
+            }
+          };
+
+          // Support both v4 parse API and older if present
+          let html;
+          if (typeof marked.parse === 'function') {
+            html = marked.parse(md, options);
+          } else {
+            html = marked(md, options);
+          }
+
+          // Render
+          output.innerHTML = html;
+          status.textContent = 'Rendered input.md to HTML. Highlighting code blocks...';
+
+          // Apply syntax highlighting to code blocks using highlight.js
+          const blocks = output.querySelectorAll('pre > code');
+          blocks.forEach((block) => {
+            try {
+              if (typeof hljs !== 'undefined') {
+                // Prefer highlightElement if available (v11+)
+                if (typeof hljs.highlightElement === 'function') {
+                  hljs.highlightElement(block);
+                } else if (typeof hljs.highlightBlock === 'function') {
+                  hljs.highlightBlock(block);
+                } else {
+                  // Fallback: try auto-detect
+                  const result = hljs.highlightAuto(block.textContent);
+                  block.innerHTML = result.value;
+                }
+              }
+            } catch (e) {
+              // Silently ignore highlight errors for safety
+            }
+          });
+
+          status.textContent = 'Done.';
+        } catch (err) {
+          status.textContent = 'Error while rendering. See console.';
+          console.error(err);
+          output.innerHTML = '<p>Error rendering input.md.</p>';
+        }
+      }
+
+      // Kick off on load
+      if (typeof marked !== 'undefined' && typeof hljs !== 'undefined') {
+        loadAndRender();
+      } else {
+        status.textContent = 'Loading dependencies...';
+        // If CDN scripts take time to load, retry after a short delay
+        const retry = setInterval(() => {
+          if (typeof marked !== 'undefined' && typeof hljs !== 'undefined') {
+            clearInterval(retry);
+            loadAndRender();
+          }
+        }, 100);
+      }
+    })();
+  </script>
+</body>
+</html>
