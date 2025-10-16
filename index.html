@@ -4,157 +4,202 @@
   <meta charset="utf-8"/>
   <meta content="width=device-width, initial-scale=1" name="viewport"/>
   <title>
-   Markdown Viewer
+   Markdown Live Preview with Word Count
   </title>
   <style>
    :root {
-      --bg: #1a1b23;
-      --panel: #1f2130;
-      --fg: #e6e6e6;
-      --muted: #b6b8c4;
-      --accent: #6ea8fe;
+      --bg: #0b1020;
+      --panel: #141a2a;
+      --border: #2b3650;
+      --text: #e6eaf7;
+      --muted: #9aa4b2;
+      --badge: #374151;
     }
+
     html, body {
       height: 100%;
       margin: 0;
-      background: var(--bg);
-      color: var(--fg);
-      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      background: #0b1020;
+      color: #e6eaf7;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial;
     }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 18px;
+    }
+
     header {
-      padding: 12px 16px;
-      border-bottom: 1px solid #2a2a3a;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      position: sticky;
-      top: 0;
-      background: rgba(26,26,38,.95);
-      z-index: 10;
+      gap: 12px;
+      padding: 8px 0 16px;
     }
-    #title {
-      display: flex;
-      align-items: center;
-      gap: 10px;
+
+    h1 {
+      font-size: 1.25rem;
+      margin: 0;
       font-weight: 600;
     }
-    #markdown-source-label {
-      font-size: 0.92rem;
-      color: var(--muted);
+
+    .badge {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas;
+      background: var(--badge);
+      color: #fff;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 0.95rem;
+      user-select: none;
       white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 60vw;
     }
-    main {
-      padding: 20px;
-      max-width: 900px;
-      margin: 0 auto;
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      align-items: stretch;
     }
-    article {
+
+    .panel {
+      background: #0e1430;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+    }
+
+    textarea#markdown-input {
+      width: 100%;
+      height: 70vh;
+      min-height: 320px;
+      resize: vertical;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      background: #0b1220;
+      color: #e8eaf8;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas;
+      font-size: 14px;
+      outline: none;
+    }
+
+    #preview {
+      width: 100%;
+      height: 70vh;
+      min-height: 320px;
+      overflow: auto;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #0b1220;
+    }
+
+    /* Tiny typography improvements for rendered HTML */
+    #preview h1, #preview h2, #preview h3 {
+      color: #fff;
+      margin: 0.5em 0 0.25em;
+    }
+    #preview p {
       line-height: 1.6;
+      color: #e6eaf7;
     }
-    h1, h2, h3 { line-height: 1.2; margin-top: 1em; margin-bottom: .5em; }
-    pre { background: #0b0b0b; padding: 12px; border-radius: 6px; overflow: auto; }
-    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas; }
-    a { color: #8ab4f8; text-decoration: none; }
-    a:hover { text-decoration: underline; }
+    #preview a { color: #93c5fd; text-decoration: none; }
+    #preview a:hover { text-decoration: underline; }
+
+    @media (max-width: 900px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+      textarea#markdown-input, #preview {
+        height: 50vh;
+        min-height: 260px;
+      }
+    }
   </style>
  </head>
  <body>
-  <header>
-   <div id="title">
-    <span style="font-size: 1.1rem; font-weight: 700;">
-     Markdown Viewer
+  <div class="container">
+   <header>
+    <h1>
+     Markdown Live Preview
+    </h1>
+    <span aria-live="polite" class="badge" id="markdown-word-count" title="Word count badge">
+     0
     </span>
-   </div>
-   <div aria-live="polite" id="markdown-source-label">
-    Source: local input.md
-   </div>
-  </header>
-  <main>
-   <section id="markdown-container">
-    <article id="markdown-content">
-    </article>
+   </header>
+   <section aria-label="Markdown editor and preview" class="layout">
+    <div aria-label="Markdown editor" class="panel">
+     <textarea id="markdown-input" placeholder="Type Markdown here..." spellcheck="false"></textarea>
+    </div>
+    <div aria-label="Rendered preview" class="panel">
+     <div aria-live="polite" class="preview" id="preview">
+     </div>
+    </div>
    </section>
-  </main>
-  <!-- External libraries -->
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js">
-  </script>
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css" rel="stylesheet"/>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js">
+  </div>
+  <!-- Marked.js CDN (latest stable) -->
+  <script src="https://cdn.jsdelivr.net/npm/marked@latest/marked.min.js">
   </script>
   <script>
    (function () {
-      const contentEl = document.getElementById('markdown-content');
-      const sourceLabel = document.getElementById('markdown-source-label');
+      const wordCountBadge = document.getElementById('markdown-word-count');
+      const inputEl = document.getElementById('markdown-input');
+      const previewEl = document.getElementById('preview');
 
-      // Render markdown to HTML + syntax highlighting
-      function renderMarkdown(md) {
-        const html = marked.parse(md, {
-          gfm: true,
-          breaks: true
-        });
-        contentEl.innerHTML = html;
-
-        // Highlight code blocks if hljs is available
-        if (typeof hljs !== 'undefined') {
-          document.querySelectorAll('pre code').forEach((block) => {
-            hljs.highlightElement(block);
-          });
-        }
+      // Simple word counter (splits on whitespace)
+      function countWords(text) {
+        if (!text) return 0;
+        const t = text.trim();
+        if (t.length === 0) return 0;
+        // Treat any sequence of non-whitespace chars as a word
+        return t.split(/\s+/).length;
       }
 
-      function updateSourceLabel(text) {
-        if (sourceLabel) sourceLabel.textContent = text;
+      // Update the badge with Intl.NumberFormat
+      function updateWordCountFromText(text) {
+        const cnt = countWords(text || '');
+        const nf = new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 });
+        wordCountBadge.textContent = nf.format(cnt);
+        wordCountBadge.title = `Word count: ${cnt}`;
       }
 
-      function loadMarkdownFromText(md, sourceName) {
-        renderMarkdown(md);
-        updateSourceLabel('Source: ' + sourceName);
-        document.title = 'Markdown Viewer â ' + sourceName;
+      // Render Markdown to HTML and update word count
+      function renderMarkdown() {
+        const md = inputEl.value;
+        // Convert to HTML using Marked
+        const html = marked(md);
+        previewEl.innerHTML = html;
+        // After render, update the word count
+        updateWordCountFromText(md);
       }
 
-      function fetchMarkdownFrom(url, onSuccess, onError) {
-        fetch(url)
-          .then(res => {
-            if (!res.ok) throw new Error('Request failed: ' + res.status);
-            return res.text();
+      // Initialize by loading input.md if present
+      function initFromFile() {
+        fetch('input.md')
+          .then(response => {
+            if (!response.ok) throw new Error('input.md not found');
+            return response.text();
           })
-          .then(text => onSuccess(text))
-          .catch(err => onError(err));
-      }
-
-      // Check for ?url= parameter
-      const urlParams = new URLSearchParams(window.location.search);
-      const remoteUrl = urlParams.get('url');
-      const localDefault = 'input.md';
-
-      if (remoteUrl) {
-        updateSourceLabel('Source: URL â ' + remoteUrl);
-        fetchMarkdownFrom(remoteUrl,
-          (md) => {
-            loadMarkdownFromText(md, remoteUrl);
-          },
-          () => {
-            // Fallback to local attachment if URL load fails
-            updateSourceLabel('Source: URL failed, falling back to ' + localDefault);
-            fetchMarkdownFrom(localDefault,
-              (md) => loadMarkdownFromText(md, localDefault),
-              () => {
-                contentEl.innerHTML = '<p>Unable to load markdown from URL or local attachment.</p>';
-                updateSourceLabel('Source: unavailable');
-              });
-          });
-      } else {
-        // No URL param; load local attachment by default
-        fetchMarkdownFrom(localDefault,
-          (md) => loadMarkdownFromText(md, localDefault),
-          () => {
-            contentEl.innerHTML = '<p>Unable to load local attachment.</p>';
-            updateSourceLabel('Source: unavailable');
+          .then(text => {
+            inputEl.value = text;
+            renderMarkdown();
+          })
+          .catch(() => {
+            // If the file cannot be loaded, render with empty content
+            inputEl.value = '';
+            renderMarkdown();
           });
       }
+
+      // Event: live update on input
+      inputEl.addEventListener('input', () => {
+        renderMarkdown();
+      });
+
+      // Start after DOM is ready
+      document.addEventListener('DOMContentLoaded', initFromFile);
     })();
   </script>
  </body>

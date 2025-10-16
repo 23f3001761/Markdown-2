@@ -5,7 +5,7 @@
 This FastAPI-based service receives a request with a **brief** describing an app to build. It uses an **LLM** to generate code, deploys the app to **GitHub Pages**, and notifies an evaluation API. Each request can result in a unique app.
 
 **Example Brief:**  
-_Support loading Markdown from a ?url= parameter when present and fall back to the attachment otherwise, showing the active source in #markdown-source-label._
+_Display a live word count badge #markdown-word-count that updates after every render and formats numbers with Intl.NumberFormat._
 
 ## Revised Version  
 
