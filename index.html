@@ -4,202 +4,234 @@
   <meta charset="utf-8"/>
   <meta content="width=device-width, initial-scale=1" name="viewport"/>
   <title>
-   Markdown Live Preview with Word Count
+   Markdown Editor with Live Word Count
   </title>
   <style>
    :root {
       --bg: #0b1020;
-      --panel: #141a2a;
-      --border: #2b3650;
-      --text: #e6eaf7;
-      --muted: #9aa4b2;
-      --badge: #374151;
+      --card: #141a2a;
+      --text: #e6eafc;
+      --muted: #a6b3d8;
+      --accent: #4cd1ff;
+      --border: #2a3150;
     }
 
-    html, body {
-      height: 100%;
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
       margin: 0;
-      background: #0b1020;
-      color: #e6eaf7;
-      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial;
-    }
-
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 18px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+      background: radial-gradient(circle at 20% -10%, rgba(76,209,255,0.08), transparent 40%),
+                  radial-gradient(circle at 100% 0, rgba(124, 58, 237, 0.08), transparent 40%),
+                  var(--bg);
+      color: var(--text);
     }
 
     header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
-      padding: 8px 0 16px;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(10, 12, 25, 0.92);
     }
 
     h1 {
-      font-size: 1.25rem;
       margin: 0;
-      font-weight: 600;
+      font-size: 1.1rem;
+      letter-spacing: .2px;
     }
 
-    .badge {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas;
-      background: var(--badge);
-      color: #fff;
+    /* Live word count badge */
+    #markdown-word-count {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
       padding: 6px 12px;
       border-radius: 999px;
-      font-size: 0.95rem;
-      user-select: none;
-      white-space: nowrap;
+      background: #1e2a4a;
+      color: #fff;
+      font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+      font-size: 0.92rem;
+      border: 1px solid #2c357a;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
     }
 
-    .layout {
+    main {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 14px;
-      align-items: stretch;
+      gap: 16px;
+      padding: 16px;
     }
 
     .panel {
-      background: #0e1430;
+      background: rgba(20,26,42,0.95);
       border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 10px;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+      border-radius: 12px;
+      padding: 12px;
+      min-height: 60vh;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+    }
+
+    label {
+      display: block;
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 6px;
     }
 
     textarea#markdown-input {
       width: 100%;
-      height: 70vh;
-      min-height: 320px;
-      resize: vertical;
-      border: 1px solid var(--border);
+      height: calc(100% - 28px);
+      border: 1px solid #2c315e;
       border-radius: 8px;
       padding: 12px;
-      background: #0b1220;
-      color: #e8eaf8;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas;
-      font-size: 14px;
       outline: none;
+      resize: both;
+      background: #0b1020;
+      color: #eaf2ff;
+      font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+      font-size: 0.95rem;
+      line-height: 1.5;
     }
 
-    #preview {
+    #markdown-preview {
       width: 100%;
-      height: 70vh;
-      min-height: 320px;
+      height: 100%;
       overflow: auto;
       padding: 12px;
-      border: 1px solid var(--border);
       border-radius: 8px;
-      background: #0b1220;
+      border: 1px solid #2c315e;
+      background: #0b1020;
     }
 
-    /* Tiny typography improvements for rendered HTML */
-    #preview h1, #preview h2, #preview h3 {
-      color: #fff;
-      margin: 0.5em 0 0.25em;
+    /* Simple markdown styling for preview */
+    #markdown-preview h1, #markdown-preview h2, #markdown-preview h3 {
+      color: #e6eaff;
     }
-    #preview p {
-      line-height: 1.6;
-      color: #e6eaf7;
+    #markdown-preview p { color: #eaf1ff; }
+    #markdown-preview code {
+      background: rgba(255,255,255,0.08);
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid rgba(255,255,255,0.15);
     }
-    #preview a { color: #93c5fd; text-decoration: none; }
-    #preview a:hover { text-decoration: underline; }
+    #markdown-preview pre {
+      background: #0a0f1a;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #2c315e;
+      overflow: auto;
+    }
 
     @media (max-width: 900px) {
-      .layout {
-        grid-template-columns: 1fr;
-      }
-      textarea#markdown-input, #preview {
-        height: 50vh;
-        min-height: 260px;
-      }
+      main { grid-template-columns: 1fr; }
+      textarea#markdown-input { height: 40vh; }
     }
   </style>
+  <!-- Marked.js for Markdown rendering -->
+  <script crossorigin="anonymous" integrity="sha384-..." src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js">
+  </script>
  </head>
  <body>
-  <div class="container">
-   <header>
-    <h1>
-     Markdown Live Preview
-    </h1>
-    <span aria-live="polite" class="badge" id="markdown-word-count" title="Word count badge">
-     0
-    </span>
-   </header>
-   <section aria-label="Markdown editor and preview" class="layout">
-    <div aria-label="Markdown editor" class="panel">
-     <textarea id="markdown-input" placeholder="Type Markdown here..." spellcheck="false"></textarea>
+  <header>
+   <h1>
+    Markdown Editor
+   </h1>
+   <span aria-live="polite" id="markdown-word-count">
+    Words: 0
+   </span>
+  </header>
+  <main>
+   <section aria-label="Markdown input" class="panel">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+     <label for="markdown-input" style="margin:0;">
+      Markdown input
+     </label>
+     <span style="font-size:0.8rem;color:#a8b3d1;">
+      Live word count updates after every render
+     </span>
     </div>
-    <div aria-label="Rendered preview" class="panel">
-     <div aria-live="polite" class="preview" id="preview">
-     </div>
+    <textarea id="markdown-input" placeholder="Type Markdown here..." spellcheck="false"></textarea>
+   </section>
+   <section aria-label="Markdown preview" class="panel">
+    <div style="margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;">
+     <label style="margin:0;">
+      Preview (rendered HTML)
+     </label>
+     <span style="font-size:0.8rem;color:#a8b3d1;">
+      Uses marked.js
+     </span>
+    </div>
+    <div id="markdown-preview">
     </div>
    </section>
-  </div>
-  <!-- Marked.js CDN (latest stable) -->
-  <script src="https://cdn.jsdelivr.net/npm/marked@latest/marked.min.js">
-  </script>
+  </main>
   <script>
-   (function () {
-      const wordCountBadge = document.getElementById('markdown-word-count');
+   (function() {
       const inputEl = document.getElementById('markdown-input');
-      const previewEl = document.getElementById('preview');
+      const previewEl = document.getElementById('markdown-preview');
+      const badgeEl = document.getElementById('markdown-word-count');
+      const wordFormat = new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 });
 
-      // Simple word counter (splits on whitespace)
+      // Count words in the Markdown source text
       function countWords(text) {
         if (!text) return 0;
-        const t = text.trim();
-        if (t.length === 0) return 0;
-        // Treat any sequence of non-whitespace chars as a word
-        return t.split(/\s+/).length;
+        // Normalize spaces, split by whitespace
+        const tokens = text.trim().split(/\s+/);
+        let count = 0;
+        for (const t of tokens) {
+          if (!t) continue;
+          // Remove surrounding punctuation to approximate word tokens
+          const clean = t.replace(/^[^A-Za-z0-9]+|[^A-Za-z0-9]+$/g, '');
+          if (clean.length > 0) count++;
+        }
+        return count;
       }
 
-      // Update the badge with Intl.NumberFormat
-      function updateWordCountFromText(text) {
-        const cnt = countWords(text || '');
-        const nf = new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 });
-        wordCountBadge.textContent = nf.format(cnt);
-        wordCountBadge.title = `Word count: ${cnt}`;
-      }
-
-      // Render Markdown to HTML and update word count
+      // Render markdown to HTML and update word count
       function renderMarkdown() {
         const md = inputEl.value;
-        // Convert to HTML using Marked
-        const html = marked(md);
-        previewEl.innerHTML = html;
-        // After render, update the word count
-        updateWordCountFromText(md);
+        // Render to the preview area
+        previewEl.innerHTML = marked.parse(md, {
+          breaks: true,
+          smartypants: true
+        });
+        // Update word count after render
+        updateWordCount(md);
       }
 
-      // Initialize by loading input.md if present
-      function initFromFile() {
-        fetch('input.md')
-          .then(response => {
-            if (!response.ok) throw new Error('input.md not found');
-            return response.text();
-          })
-          .then(text => {
+      function updateWordCount(mdText) {
+        const words = countWords(mdText);
+        badgeEl.textContent = 'Words: ' + wordFormat.format(words);
+      }
+
+      // Load initial content from input.md if available
+      async function loadInitial() {
+        try {
+          const res = await fetch('input.md');
+          if (res.ok) {
+            const text = await res.text();
             inputEl.value = text;
-            renderMarkdown();
-          })
-          .catch(() => {
-            // If the file cannot be loaded, render with empty content
-            inputEl.value = '';
-            renderMarkdown();
-          });
+          } else {
+            console.warn('Could not fetch input.md: status', res.status);
+          }
+        } catch (e) {
+          console.warn('Error fetching input.md', e);
+        }
+        renderMarkdown();
       }
 
-      // Event: live update on input
+      // Live updates on input
       inputEl.addEventListener('input', () => {
         renderMarkdown();
       });
 
-      // Start after DOM is ready
-      document.addEventListener('DOMContentLoaded', initFromFile);
+      // Initialize
+      loadInitial();
     })();
   </script>
  </body>
